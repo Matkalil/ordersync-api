@@ -4,13 +4,17 @@
   "description": "Webhook integration service for e-commerce orders with a secure REST API.",
   "main": "dist/server.js",
   "engines": {
-  "node": ">=24"
-},
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -28,9 +32,15 @@
     "express": "^5.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.73.0"
   }
 }
