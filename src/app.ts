@@ -1,7 +1,9 @@
 import express, { type Express } from 'express';
+import { requestLogger } from './middlewares/request-logger';
 
 const app: Express = express();
 
+app.use(requestLogger);
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
