@@ -1,0 +1,54 @@
+Enum order_status {
+  pending
+  paid
+  shipped
+  delivered
+  cancelled
+}
+
+Table orders {
+  id uuid [pk, default: `gen_random_uuid()`]
+  external_id varchar(100) [not null, note: 'Order id sent by the store']
+  store varchar(50) [not null]
+  customer_name varchar(150) [not null]
+  customer_email varchar(254) [not null]
+  currency char(3) [not null]
+  total_cents integer [not null]
+  status order_status [not null, default: 'pending']
+  raw_payload jsonb [not null, note: 'Original webhook payload']
+  placed_at timestamptz [not null, note: 'When the customer placed the order']
+  created_at timestamptz [not null, default: `now()`, note: 'When the API received the order']
+  updated_at timestamptz [not null, default: `now()`]
+  indexes {
+    (store, external_id) [unique, name: 'orders_store_external_id_key']
+    status
+    created_at
+  }
+}
+
+Table order_items {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+  sku varchar(100) [not null]
+  name varchar(150) [not null]
+  quantity integer [not null]
+  unit_price_cents integer [not null]
+  indexes {
+    order_id
+  }
+}
+
+Table order_status_history {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+  from_status order_status [null, note: 'Null on the first record']
+  to_status order_status [not null]
+  reason text [null]
+  changed_at timestamptz [not null, default: `now()`]
+    indexes {
+    order_id
+  }
+}
+
+Ref: order_items.order_id > orders.id [delete: cascade]
+Ref: order_status_history.order_id > orders.id [delete: cascade]
