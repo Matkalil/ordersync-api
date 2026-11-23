@@ -1,5 +1,7 @@
 import express, { type Express } from 'express';
 import { requestLogger } from './middlewares/request-logger';
+import { errorHandler } from './middlewares/error-handler';
+import { notFound } from './middlewares/not-found';
 
 const app: Express = express();
 
@@ -13,5 +15,8 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
