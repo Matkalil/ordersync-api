@@ -1,1 +1,1 @@
-console.log("OrderSync API");
+console.log('OrderSync API');
