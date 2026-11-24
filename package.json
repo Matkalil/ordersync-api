@@ -18,7 +18,8 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:psql": "docker compose exec db psql -U ordersync -d ordersync",
-    "migrate": "tsx --env-file=.env scripts/migrate.ts"
+    "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "seed": "tsx --env-file=.env scripts/seed.ts"
   },
   "repository": {
     "type": "git",
