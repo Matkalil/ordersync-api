@@ -3,6 +3,7 @@ import { requestLogger } from './middlewares/request-logger';
 import { errorHandler } from './middlewares/error-handler';
 import { notFound } from './middlewares/not-found';
 import { pool } from './db/pool';
+import { webhooksRouter } from './routes/webhooks';
 
 const app: Express = express();
 
@@ -34,6 +35,8 @@ app.get('/health', async (req, res) => {
     });
   }
 });
+
+app.use('/webhooks', webhooksRouter);
 
 app.use(notFound);
 app.use(errorHandler);
