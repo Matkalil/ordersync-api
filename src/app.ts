@@ -7,7 +7,13 @@ import { pool } from './db/pool';
 const app: Express = express();
 
 app.use(requestLogger);
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 
 app.get('/health', async (req, res) => {
   try {
