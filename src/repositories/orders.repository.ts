@@ -145,3 +145,66 @@ export async function countOrders(db: Queryable, filters: OrderFilters): Promise
 
   return result.rows[0]?.total ?? 0;
 }
+
+export interface OrderRecord extends OrderSummary {
+  customerEmail: string;
+  rawPayload: unknown;
+  updatedAt: Date;
+}
+
+export interface OrderItems {
+  id: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+}
+
+export interface OrderStatusChange {
+  fromStatus: OrderStatus | null;
+  toStatus: OrderStatus;
+  reason: string | null;
+  changedAt: Date;
+}
+
+export async function findOrderById(db: Queryable, id: string): Promise<OrderRecord | null> {
+  const result = await db.query<OrderRecord>(
+    `SELECT id, store, external_id AS "externalId", customer_name AS "customerName",
+            customer_email AS "customerEmail", currency, total_cents AS "totalCents", status,
+            raw_payload AS "rawPayload", placed_at AS "placedAt",
+            created_at AS "createdAt", updated_at AS "updatedAt"
+     FROM orders
+     WHERE id = $1`,
+    [id],
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function findOrderItems(db: Queryable, orderId: string): Promise<OrderItems[]> {
+  const result = await db.query<OrderItems>(
+    `SELECT id, sku, name, quantity, unit_price_cents AS "unitPriceCents"
+     FROM order_items
+     WHERE order_id = $1
+     ORDER BY sku`,
+    [orderId],
+  );
+
+  return result.rows;
+}
+
+export async function findOrderHistory(
+  db: Queryable,
+  orderId: string,
+): Promise<OrderStatusChange[]> {
+  const result = await db.query<OrderStatusChange>(
+    `SELECT from_status AS "fromStatus", to_status AS "toStatus", reason,
+            changed_at AS "changedAt"
+     FROM order_status_history
+     WHERE order_id = $1
+     ORDER BY changed_at`,
+    [orderId],
+  );
+
+  return result.rows;
+}
