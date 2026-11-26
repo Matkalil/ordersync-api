@@ -2,8 +2,9 @@ import express, { type Express } from 'express';
 import { requestLogger } from './middlewares/request-logger';
 import { errorHandler } from './middlewares/error-handler';
 import { notFound } from './middlewares/not-found';
-import { pool } from './db/pool';
 import { webhooksRouter } from './routes/webhooks';
+import { healthRouter } from './routes/health';
+import { ordersRouter } from './routes/orders';
 
 const app: Express = express();
 
@@ -16,27 +17,9 @@ app.use(
   }),
 );
 
-app.get('/health', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.status(200).json({
-      status: 'ok',
-      database: 'ok',
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    req.log.error({ err }, 'Health check: database unavailable');
-    res.status(503).json({
-      status: 'degraded',
-      database: 'unavailable',
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
-
+app.use('/health', healthRouter);
 app.use('/webhooks', webhooksRouter);
+app.use('/orders', ordersRouter);
 
 app.use(notFound);
 app.use(errorHandler);

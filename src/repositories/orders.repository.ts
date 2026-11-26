@@ -1,5 +1,6 @@
-import type { PoolClient } from 'pg';
+import type { PoolClient, Pool } from 'pg';
 import type { OrderWebhookPayload } from '../schemas/order-webhook.schema';
+import type { OrderStatus } from '../schemas/order-query.schema';
 
 type OrderItemPayload = OrderWebhookPayload['items'][number];
 
@@ -70,4 +71,77 @@ export async function insertStatusHistory(
      VALUES ($1, $2, $3, $4)`,
     [orderId, fromStatus, toStatus, reason ?? null],
   );
+}
+
+type Queryable = Pool | PoolClient;
+
+export interface OrderFilters {
+  status?: OrderStatus;
+  from?: string;
+  to?: string;
+}
+
+export interface OrderSummary {
+  id: string;
+  store: string;
+  externalId: string;
+  customerName: string;
+  currency: string;
+  totalCents: number;
+  status: OrderStatus;
+  placedAt: Date;
+  createdAt: Date;
+}
+
+function buildWhere(filters: OrderFilters): { where: string; values: unknown[] } {
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+
+  if (filters.status) {
+    values.push(filters.status);
+    conditions.push(`status = $${values.length}`);
+  }
+  if (filters.from) {
+    values.push(filters.from);
+    conditions.push(`placed_at >= $${values.length}`);
+  }
+  if (filters.to) {
+    values.push(filters.to);
+    conditions.push(`placed_at <= $${values.length}`);
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where, values };
+}
+
+export async function findOrders(
+  db: Queryable,
+  filters: OrderFilters,
+  limit: number,
+  offset: number,
+): Promise<OrderSummary[]> {
+  const { where, values } = buildWhere(filters);
+
+  const result = await db.query<OrderSummary>(
+    `SELECT id, store, external_id AS "externalId", customer_name AS "customerName",
+            currency, total_cents AS "totalCents", status,
+            placed_at AS "placedAt", created_at AS "createdAt"
+     FROM orders
+     ${where}
+     ORDER BY created_at DESC, id
+     LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+    [...values, limit, offset],
+  );
+
+  return result.rows;
+}
+
+export async function countOrders(db: Queryable, filters: OrderFilters): Promise<number> {
+  const { where, values } = buildWhere(filters);
+
+  const result = await db.query<{ total: number }>(
+    `SELECT COUNT(*)::int AS total FROM orders ${where}`,
+    values,
+  );
+
+  return result.rows[0]?.total ?? 0;
 }
