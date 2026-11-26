@@ -7,6 +7,16 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   API_KEY: z.string().min(32),
   WEBHOOK_SECRET: z.string().min(32),
+  CORS_ORIGINS: z
+    .string()
+    .default('')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0),
+    ),
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(100),
 });
 
 const parsed = envSchema.safeParse(process.env);
