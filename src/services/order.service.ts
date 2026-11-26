@@ -1,11 +1,15 @@
-import { withTransaction } from '../db/pool';
+import { withTransaction, pool } from '../db/pool';
 import {
   findOrderId,
+  findOrders,
   insertItems,
   insertOrder,
   insertStatusHistory,
+  countOrders,
 } from '../repositories/orders.repository';
 import type { OrderWebhookPayload } from '../schemas/order-webhook.schema';
+import type { OrderSummary } from '../repositories/orders.repository';
+import type { ListOrdersQuery } from '../schemas/order-query.schema';
 
 export interface IngestOrderResult {
   id: string;
@@ -32,4 +36,21 @@ export async function ingestOrder(
 
     return { id: insertedId, created: true };
   });
+}
+
+export interface PaginatedOrders {
+  data: OrderSummary[];
+  meta: { page: number; limit: number; total: number };
+}
+
+export async function getOrders(query: ListOrdersQuery): Promise<PaginatedOrders> {
+  const { page, limit, ...filters } = query;
+  const offset = (page - 1) * limit;
+
+  const [data, total] = await Promise.all([
+    findOrders(pool, filters, limit, offset),
+    countOrders(pool, filters),
+  ]);
+
+  return { data, meta: { page, limit, total } };
 }
