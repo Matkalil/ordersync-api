@@ -1,15 +1,22 @@
-import { withTransaction, pool } from '../db/pool';
+import { pool, withTransaction } from '../db/pool';
+import { AppError } from '../errors/app-error';
 import {
+  countOrders,
+  findOrderById,
+  findOrderHistory,
   findOrderId,
+  findOrderItems,
   findOrders,
   insertItems,
   insertOrder,
   insertStatusHistory,
-  countOrders,
+  type OrderItems,
+  type OrderRecord,
+  type OrderStatusChange,
+  type OrderSummary,
 } from '../repositories/orders.repository';
-import type { OrderWebhookPayload } from '../schemas/order-webhook.schema';
-import type { OrderSummary } from '../repositories/orders.repository';
 import type { ListOrdersQuery } from '../schemas/order-query.schema';
+import type { OrderWebhookPayload } from '../schemas/order-webhook.schema';
 
 export interface IngestOrderResult {
   id: string;
@@ -53,4 +60,24 @@ export async function getOrders(query: ListOrdersQuery): Promise<PaginatedOrders
   ]);
 
   return { data, meta: { page, limit, total } };
+}
+
+export interface OrderDetail extends OrderRecord {
+  items: OrderItems[];
+  history: OrderStatusChange[];
+}
+
+export async function getOrderById(id: string): Promise<OrderDetail> {
+  const order = await findOrderById(pool, id);
+
+  if (!order) {
+    throw new AppError(404, 'ORDER_NOT_FOUND', 'Order not found');
+  }
+
+  const [items, history] = await Promise.all([
+    findOrderItems(pool, id),
+    findOrderHistory(pool, id),
+  ]);
+
+  return { ...order, items, history };
 }

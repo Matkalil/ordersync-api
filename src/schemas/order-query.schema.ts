@@ -20,3 +20,7 @@ export const listOrdersQuerySchema = z
   );
 
 export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;
+
+export const orderIdParamsSchema = z.object({
+  id: z.uuid(),
+});
