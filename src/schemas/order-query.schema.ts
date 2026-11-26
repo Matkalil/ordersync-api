@@ -24,3 +24,10 @@ export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;
 export const orderIdParamsSchema = z.object({
   id: z.uuid(),
 });
+
+export const updateOrderStatusBodySchema = z.object({
+  status: z.enum(ORDER_STATUSES),
+  reason: z.string().trim().min(1).max(500).optional(),
+});
+
+export type UpdateOrderStatusBody = z.infer<typeof updateOrderStatusBodySchema>;
