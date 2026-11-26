@@ -1,4 +1,5 @@
 import { pool, withTransaction } from '../db/pool';
+import { ALLOWED_TRANSITIONS, canTransition } from '../domain/order-status';
 import { AppError } from '../errors/app-error';
 import {
   countOrders,
@@ -7,15 +8,17 @@ import {
   findOrderId,
   findOrderItems,
   findOrders,
+  findOrderStatusForUpdate,
   insertItems,
   insertOrder,
   insertStatusHistory,
+  updateOrderStatus,
   type OrderItems,
   type OrderRecord,
   type OrderStatusChange,
   type OrderSummary,
 } from '../repositories/orders.repository';
-import type { ListOrdersQuery } from '../schemas/order-query.schema';
+import type { ListOrdersQuery, OrderStatus } from '../schemas/order-query.schema';
 import type { OrderWebhookPayload } from '../schemas/order-webhook.schema';
 
 export interface IngestOrderResult {
@@ -80,4 +83,32 @@ export async function getOrderById(id: string): Promise<OrderDetail> {
   ]);
 
   return { ...order, items, history };
+}
+
+export async function changeOrderStatus(
+  id: string,
+  to: OrderStatus,
+  reason?: string,
+): Promise<OrderDetail> {
+  await withTransaction(async (client) => {
+    const from = await findOrderStatusForUpdate(client, id);
+
+    if (!from) {
+      throw new AppError(404, 'ORDER_NOT_FOUND', 'Order not found');
+    }
+
+    if (!canTransition(from, to)) {
+      throw new AppError(
+        409,
+        'INVALID_STATUS_TRANSITION',
+        `Cannot change status from ${from} to ${to}`,
+        { from, to, allowed: ALLOWED_TRANSITIONS[from] },
+      );
+    }
+
+    await updateOrderStatus(client, id, to);
+    await insertStatusHistory(client, id, from, to, reason);
+  });
+
+  return getOrderById(id);
 }

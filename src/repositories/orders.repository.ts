@@ -208,3 +208,26 @@ export async function findOrderHistory(
 
   return result.rows;
 }
+
+export async function findOrderStatusForUpdate(
+  client: PoolClient,
+  id: string,
+): Promise<OrderStatus | null> {
+  const result = await client.query<{ status: OrderStatus }>(
+    'SELECT status FROM orders WHERE id = $1 FOR UPDATE',
+    [id],
+  );
+
+  return result.rows[0]?.status ?? null;
+}
+
+export async function updateOrderStatus(
+  client: PoolClient,
+  id: string,
+  status: OrderStatus,
+): Promise<void> {
+  await client.query('UPDATE orders SET status = $1, updated_at = now() WHERE id = $2', [
+    status,
+    id,
+  ]);
+}
