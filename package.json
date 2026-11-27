@@ -10,17 +10,19 @@
     "dev": "tsx watch --env-file=.env src/server.ts",
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/server.js",
-    "typecheck": "tsc --noEmit && tsc -p scripts",
+    "typecheck": "tsc --noEmit && tsc -p scripts && tsc -p tests",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:up": "docker compose up -d",
+    "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:psql": "docker compose exec db psql -U ordersync -d ordersync",
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
     "seed": "tsx --env-file=.env scripts/seed.ts",
-    "simulate": "tsx --env-file=.env scripts/simulate-webhook.ts"
+    "simulate": "tsx --env-file=.env scripts/simulate-webhook.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -50,13 +52,16 @@
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.14.0",
     "pino-pretty": "^13.2.0",
     "prettier": "^3.10.1",
+    "supertest": "^7.3.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.0",
-    "typescript-eslint": "^8.73.0"
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.2"
   }
 }
