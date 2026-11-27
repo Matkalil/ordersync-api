@@ -12,10 +12,10 @@ const server = app.listen(env.PORT, () => {
 let shuttingDown = false;
 
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
-  if(shuttingDown) {
+  if (shuttingDown) {
     return;
   }
-shuttingDown = true
+  shuttingDown = true;
 
   logger.info({ signal }, 'Shutdown signal received, closing gracefully');
 
@@ -34,10 +34,10 @@ shuttingDown = true
     await pool.end();
     logger.info('Database pool closed');
 
-    process.exit(0);  
+    process.exit(0);
   } catch (err) {
     logger.error({ err }, 'Error during shutdown');
-    process.exit(1)
+    process.exit(1);
   }
 }
 
